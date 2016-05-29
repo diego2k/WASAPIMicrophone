@@ -20,6 +20,7 @@
 #include <mmdeviceapi.h>
 #include "DeviceState.h"
 #include "AudioData.h"
+#include "pch.h"
 
 using namespace Microsoft::WRL;
 using namespace Windows::Media::Devices;
@@ -28,7 +29,7 @@ using namespace Windows::Storage::Streams;
 #define AUDIO_FILE_NAME "WASAPIAudioCapture.wav"
 #define FLUSH_INTERVAL_SEC 3
 #define MILLISECONDS_TO_VISUALIZE 20
-
+#define AUDIO_CLIENT_2
 
 namespace WASAPIAudio
 {
@@ -94,7 +95,12 @@ namespace WASAPIAudio
 		IOutputStream^           m_OutputStream;
 		DataWriter^              m_WAVDataWriter;
 		WAVEFORMATEX            *m_MixFormat;
-		IAudioClient3           *m_AudioClient;
+#ifdef AUDIO_CLIENT_2
+		IAudioClient2           *m_AudioClient;
+#else
+        IAudioClient3           *m_AudioClient;
+#endif
+
 		UINT32                  m_DefaultPeriodInFrames;
 		UINT32                  m_FundamentalPeriodInFrames;
 		UINT32                  m_MaxPeriodInFrames;
