@@ -115,7 +115,13 @@ HRESULT WASAPICapture::InitializeAudioDeviceAsync()
 
     // This call must be made on the main UI thread.  Async operation will call back to 
     // IActivateAudioInterfaceCompletionHandler::ActivateCompleted, which must be an agile interface implementation
-    hr = ActivateAudioInterfaceAsync(m_DeviceIdString->Data(), __uuidof(IAudioClient3), nullptr, this, &asyncOp);
+    hr = ActivateAudioInterfaceAsync(m_DeviceIdString->Data(), 
+#ifdef AUDIO_CLIENT_2
+        __uuidof(IAudioClient2),
+#else
+        __uuidof(IAudioClient3),
+#endif
+        nullptr, this, &asyncOp);
     if (FAILED(hr))
     {
         m_DeviceStateChanged->SetState(DeviceState::DeviceStateInError, hr, true);
