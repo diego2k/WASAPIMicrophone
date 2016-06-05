@@ -12,6 +12,9 @@
 // WASAPICapture.h
 //
 #pragma once
+#pragma comment(lib, "MFuuid.lib")
+#pragma comment(lib, "Mfplat.lib")
+#pragma comment(lib, "Mmdevapi.lib")
 
 #include <Windows.h>
 #include <wrl\implements.h>
