@@ -37,5 +37,6 @@ namespace App1
 
 		DeviceStateChangedEvent^    m_StateChangedEvent;
 		ComPtr<WASAPICapture>       m_spCapture;
-	};
+        void Finish_Click(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
+    };
 }

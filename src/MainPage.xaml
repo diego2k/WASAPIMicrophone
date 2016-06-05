@@ -11,6 +11,7 @@
         <StackPanel>
             <Button Name="Start" Content="Start audio capture" Click="Start_Click"/>
             <Button Name="Stop" Content="Stop audio capture" Click="Stop_Click" />
+            <Button Name="Finish" Content="Finish audio capture" Click="Finish_Click" />
         </StackPanel>
     </Grid>
 </Page>

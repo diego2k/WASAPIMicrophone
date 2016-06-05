@@ -115,7 +115,7 @@ HRESULT WASAPICapture::InitializeAudioDeviceAsync()
     // This call must be made on the main UI thread.  Async operation will call back to 
     // IActivateAudioInterfaceCompletionHandler::ActivateCompleted, which must be an agile interface implementation
     hr = ActivateAudioInterfaceAsync(m_DeviceIdString->Data(), 
-#ifdef AUDIO_CLIENT_2
+#ifdef USE_AUDIO_CLIENT_2
         __uuidof(IAudioClient2),
 #else
         __uuidof(IAudioClient3),
@@ -226,7 +226,7 @@ HRESULT WASAPICapture::ActivateCompleted(IActivateAudioInterfaceAsyncOperation *
 
     // The wfx parameter below is optional (Its needed only for MATCH_FORMAT clients). Otherwise, wfx will be assumed 
     // to be the current engine format based on the processing mode for this stream
-#ifndef AUDIO_CLIENT_2
+#ifndef USE_AUDIO_CLIENT_2
     hr = m_AudioClient->GetSharedModeEnginePeriod(m_MixFormat, &m_DefaultPeriodInFrames, &m_FundamentalPeriodInFrames, &m_MinPeriodInFrames, &m_MaxPeriodInFrames);
     if (FAILED(hr))
     {
@@ -242,7 +242,7 @@ HRESULT WASAPICapture::ActivateCompleted(IActivateAudioInterfaceAsyncOperation *
             0,
             m_MixFormat,
             nullptr);
-#ifndef AUDIO_CLIENT_2
+#ifndef USE_AUDIO_CLIENT_2
     }
     else
     {

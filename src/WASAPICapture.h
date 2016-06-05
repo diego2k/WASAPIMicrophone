@@ -32,9 +32,8 @@ using namespace Windows::Storage::Streams;
 #define AUDIO_FILE_NAME "WASAPIAudioCapture.wav"
 #define FLUSH_INTERVAL_SEC 3
 #define MILLISECONDS_TO_VISUALIZE 20
-#define AUDIO_CLIENT_2 // Undefine this if you are using Win 10 or higher. 
-
-#define IS_LOW_LATENCY false // True does not work with AUDIO_CLIENT_2 enabled. 
+#define USE_AUDIO_CLIENT_2 // Undefine this if you are using Win 10 or higher. 
+#define IS_LOW_LATENCY false // True does not work with IAudioClient2. 
 
 namespace WASAPIAudio
 {
@@ -91,7 +90,7 @@ namespace WASAPIAudio
         IOutputStream^           m_OutputStream;
         DataWriter^              m_WAVDataWriter;
         WAVEFORMATEX            *m_MixFormat;
-#ifdef AUDIO_CLIENT_2
+#ifdef USE_AUDIO_CLIENT_2
         IAudioClient2           *m_AudioClient;
 #else
         IAudioClient3           *m_AudioClient;
