@@ -5,7 +5,13 @@ VisualStudioVersion = 14.0.25123.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "WASAPIMicrophone", "WASAPIMicrophone.vcxproj", "{0C942DA4-FE39-49EA-AC1B-283CFE82866F}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "WASAPICapture", "..\WASAPICapture\WASAPICapture.vcxitems", "{45D41ACC-2C3C-43D2-BC10-02AA73FFC7C7}"
+EndProject
 Global
+	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		..\WASAPICapture\WASAPICapture.vcxitems*{0c942da4-fe39-49ea-ac1b-283cfe82866f}*SharedItemsImports = 4
+		..\WASAPICapture\WASAPICapture.vcxitems*{45d41acc-2c3c-43d2-bc10-02aa73ffc7c7}*SharedItemsImports = 9
+	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|ARM = Debug|ARM
 		Debug|x64 = Debug|x64
