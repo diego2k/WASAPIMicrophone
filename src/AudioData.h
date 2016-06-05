@@ -26,17 +26,17 @@ namespace WASAPIAudio
 		UINT32                      m_Size;
 	};
 
-	// PlotDataReady delegate
+	// AudioDataReady delegate
 	public delegate void AudioDataReadyHandler(Platform::Object^ sender, AudioDataReadyEventArgs^ e);
 
-	// PlotDataReady Event
+	// AudioDataReady Event
 	public ref class AudioDataReadyEvent sealed
 	{
 	public:
 		AudioDataReadyEvent() {};
 
 	internal:
-		static void SendEvent(Object^ obj, Platform::Array<int, 1>^ points, UINT32 size)
+		void SendEvent(Object^ obj, Platform::Array<int, 1>^ points, UINT32 size)
 		{
 			AudioDataReadyEventArgs^ e = ref new AudioDataReadyEventArgs(points, size);
 			AudioDataReady(obj, e);

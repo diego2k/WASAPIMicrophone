@@ -8,6 +8,9 @@
     mc:Ignorable="d">
 
     <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
-        <Button Name="Test" Content="Test Audio" Click="Test_Click"/>
+        <StackPanel>
+            <Button Name="Start" Content="Start audio capture" Click="Start_Click"/>
+            <Button Name="Stop" Content="Stop audio capture" Click="Stop_Click" />
+        </StackPanel>
     </Grid>
 </Page>

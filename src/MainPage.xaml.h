@@ -29,7 +29,8 @@ namespace App1
 		void OnAudioDataReady(Object^ sender, AudioDataReadyEventArgs^ e);
 
 	private:
-		void Test_Click(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
+		void Start_Click(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
+		void Stop_Click(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
 
 		Windows::Foundation::EventRegistrationToken     m_deviceStateChangeToken;
 		Windows::Foundation::EventRegistrationToken     m_audioDataReadyToken;

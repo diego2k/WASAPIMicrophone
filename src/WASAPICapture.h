@@ -32,91 +32,84 @@ using namespace Windows::Storage::Streams;
 #define AUDIO_FILE_NAME "WASAPIAudioCapture.wav"
 #define FLUSH_INTERVAL_SEC 3
 #define MILLISECONDS_TO_VISUALIZE 20
-#define AUDIO_CLIENT_2
+#define AUDIO_CLIENT_2 // Undefine this if you are using Win 10 or higher. 
+
+#define IS_LOW_LATENCY false // True does not work with AUDIO_CLIENT_2 enabled. 
 
 namespace WASAPIAudio
 {
-	// User Configurable Arguments for Scenario
-	struct CAPTUREDEVICEPROPS
-	{
-		Platform::Boolean       IsLowLatency;
-	};
+    // Primary WASAPI Capture Class
+    class WASAPICapture :
+        public RuntimeClass< RuntimeClassFlags< ClassicCom >, FtmBase, IActivateAudioInterfaceCompletionHandler >
+    {
+    public:
+        WASAPICapture();
 
-	// Primary WASAPI Capture Class
-	class WASAPICapture :
-		public RuntimeClass< RuntimeClassFlags< ClassicCom >, FtmBase, IActivateAudioInterfaceCompletionHandler >
-	{
-	public:
-		WASAPICapture();
+        HRESULT InitializeAudioDeviceAsync();
+        HRESULT StartCaptureAsync();
+        HRESULT StopCaptureAsync();
+        HRESULT FinishCaptureAsync();
 
-		HRESULT SetProperties(CAPTUREDEVICEPROPS props);
-		HRESULT InitializeAudioDeviceAsync();
-		HRESULT StartCaptureAsync();
-		HRESULT StopCaptureAsync();
-		HRESULT FinishCaptureAsync();
+        METHODASYNCCALLBACK(WASAPICapture, StartCapture, OnStartCapture);
+        METHODASYNCCALLBACK(WASAPICapture, StopCapture, OnStopCapture);
+        METHODASYNCCALLBACK(WASAPICapture, SampleReady, OnSampleReady);
+        METHODASYNCCALLBACK(WASAPICapture, FinishCapture, OnFinishCapture);
+        METHODASYNCCALLBACK(WASAPICapture, SendScopeData, OnSendScopeData);
 
-		DeviceStateChangedEvent^ GetDeviceStateEvent() { return m_DeviceStateChanged; };
+        // IActivateAudioInterfaceCompletionHandler
+        STDMETHOD(ActivateCompleted)(IActivateAudioInterfaceAsyncOperation *operation);
 
-		METHODASYNCCALLBACK(WASAPICapture, StartCapture, OnStartCapture);
-		METHODASYNCCALLBACK(WASAPICapture, StopCapture, OnStopCapture);
-		METHODASYNCCALLBACK(WASAPICapture, SampleReady, OnSampleReady);
-		METHODASYNCCALLBACK(WASAPICapture, FinishCapture, OnFinishCapture);
-		METHODASYNCCALLBACK(WASAPICapture, SendScopeData, OnSendScopeData);
+    private:
+        ~WASAPICapture();
 
-		// IActivateAudioInterfaceCompletionHandler
-		STDMETHOD(ActivateCompleted)(IActivateAudioInterfaceAsyncOperation *operation);
+        HRESULT OnStartCapture(IMFAsyncResult* pResult);
+        HRESULT OnStopCapture(IMFAsyncResult* pResult);
+        HRESULT OnFinishCapture(IMFAsyncResult* pResult);
+        HRESULT OnSampleReady(IMFAsyncResult* pResult);
+        HRESULT OnSendScopeData(IMFAsyncResult* pResult);
 
-	private:
-		~WASAPICapture();
+        HRESULT CreateWAVFile();
+        HRESULT FixWAVHeader();
+        HRESULT OnAudioSampleRequested(Platform::Boolean IsSilence = false);
+        HRESULT InitializeScopeData();
+        HRESULT ProcessScopeData(BYTE* pData, DWORD cbBytes);
 
-		HRESULT OnStartCapture(IMFAsyncResult* pResult);
-		HRESULT OnStopCapture(IMFAsyncResult* pResult);
-		HRESULT OnFinishCapture(IMFAsyncResult* pResult);
-		HRESULT OnSampleReady(IMFAsyncResult* pResult);
-		HRESULT OnSendScopeData(IMFAsyncResult* pResult);
+    private:
+        Platform::String^   m_DeviceIdString;
+        UINT32              m_BufferFrames;
+        HANDLE              m_SampleReadyEvent;
+        MFWORKITEM_KEY      m_SampleReadyKey;
+        CRITICAL_SECTION    m_CritSec;
+        DWORD               m_dwQueueID;
 
-		HRESULT CreateWAVFile();
-		HRESULT FixWAVHeader();
-		HRESULT OnAudioSampleRequested(Platform::Boolean IsSilence = false);
-		HRESULT InitializeScopeData();
-		HRESULT ProcessScopeData(BYTE* pData, DWORD cbBytes);
+        DWORD               m_cbHeaderSize;
+        DWORD               m_cbDataSize;
+        DWORD               m_cbFlushCounter;
+        BOOL                m_fWriting;
 
-	private:
-		Platform::String^   m_DeviceIdString;
-		UINT32              m_BufferFrames;
-		HANDLE              m_SampleReadyEvent;
-		MFWORKITEM_KEY      m_SampleReadyKey;
-		CRITICAL_SECTION    m_CritSec;
-		DWORD               m_dwQueueID;
-
-		DWORD               m_cbHeaderSize;
-		DWORD               m_cbDataSize;
-		DWORD               m_cbFlushCounter;
-		BOOL                m_fWriting;
-
-		IRandomAccessStream^     m_ContentStream;
-		IOutputStream^           m_OutputStream;
-		DataWriter^              m_WAVDataWriter;
-		WAVEFORMATEX            *m_MixFormat;
+        IRandomAccessStream^     m_ContentStream;
+        IOutputStream^           m_OutputStream;
+        DataWriter^              m_WAVDataWriter;
+        WAVEFORMATEX            *m_MixFormat;
 #ifdef AUDIO_CLIENT_2
-		IAudioClient2           *m_AudioClient;
+        IAudioClient2           *m_AudioClient;
 #else
         IAudioClient3           *m_AudioClient;
 #endif
 
-		UINT32                  m_DefaultPeriodInFrames;
-		UINT32                  m_FundamentalPeriodInFrames;
-		UINT32                  m_MaxPeriodInFrames;
-		UINT32                  m_MinPeriodInFrames;
-		IAudioCaptureClient     *m_AudioCaptureClient;
-		IMFAsyncResult          *m_SampleReadyAsyncResult;
+        UINT32                  m_DefaultPeriodInFrames;
+        UINT32                  m_FundamentalPeriodInFrames;
+        UINT32                  m_MaxPeriodInFrames;
+        UINT32                  m_MinPeriodInFrames;
+        IAudioCaptureClient     *m_AudioCaptureClient;
+        IMFAsyncResult          *m_SampleReadyAsyncResult;
 
-		DeviceStateChangedEvent^       m_DeviceStateChanged;
+        DeviceStateChangedEvent^       m_DeviceStateChanged;
+        AudioDataReadyEvent^           m_AudioDataReady;
 
-		Platform::Array<int, 1>^    m_PlotData;
-		UINT32                      m_cPlotDataMax;
-		UINT32                      m_cPlotDataFilled;
+        Platform::Array<int, 1>^    m_PlotData;
+        UINT32                      m_cPlotDataMax;
+        UINT32                      m_cPlotDataFilled;
 
-		CAPTUREDEVICEPROPS          m_DeviceProps;
-	};
+    };
 }

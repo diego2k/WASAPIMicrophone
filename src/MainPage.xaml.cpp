@@ -28,11 +28,7 @@ MainPage::MainPage() :
 
 	// Initialize MF
 	HRESULT hr = MFStartup(MF_VERSION, MFSTARTUP_LITE);
-	if (SUCCEEDED(hr))
-	{
-		//m_IsMFLoaded = true;
-	}
-	else
+	if (!SUCCEEDED(hr))
 	{
 		ThrowIfFailed(hr);
 	}
@@ -108,7 +104,7 @@ void App1::MainPage::OnAudioDataReady(Object^ sender, AudioDataReadyEventArgs^ e
 
 }
 
-void App1::MainPage::Test_Click(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
+void App1::MainPage::Start_Click(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
 {
 	HRESULT hr = S_OK;
 
@@ -126,29 +122,19 @@ void App1::MainPage::Test_Click(Platform::Object^ sender, Windows::UI::Xaml::Rou
 		return;
 	}
 
-	// Get a pointer to the device event interface
-	m_StateChangedEvent = m_spCapture->GetDeviceStateEvent();
-
-	if (nullptr == m_StateChangedEvent)
-	{
-		OnDeviceStateChange(this, ref new DeviceStateChangedEventArgs(DeviceState::DeviceStateInError, E_FAIL));
-		return;
-	}
-
 	// Register for events
-	m_deviceStateChangeToken = m_StateChangedEvent->StateChangedEvent += ref new DeviceStateChangedHandler(this, &App1::MainPage::OnDeviceStateChange);
+	m_deviceStateChangeToken = DeviceStateChangedEvent::StateChangedEvent += ref new DeviceStateChangedHandler(this, &App1::MainPage::OnDeviceStateChange);
 	m_audioDataReadyToken = AudioDataReadyEvent::AudioDataReady += ref new AudioDataReadyHandler(this, &App1::MainPage::OnAudioDataReady);
-
-	// Reset discontinuity counter
-	//m_DiscontinuityCount = 0;
-
-	// Configure user based properties
-	CAPTUREDEVICEPROPS props;
-
-	auto m_IsLowLatency = static_cast<Platform::Boolean>(true);
-	props.IsLowLatency = m_IsLowLatency;
-	m_spCapture->SetProperties(props);
 
 	// Perform the initialization
 	m_spCapture->InitializeAudioDeviceAsync();
+}
+
+
+void App1::MainPage::Stop_Click(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
+{
+	if (m_spCapture)
+	{
+		m_spCapture->StopCaptureAsync();
+	}
 }

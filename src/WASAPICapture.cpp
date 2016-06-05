@@ -31,6 +31,7 @@ WASAPICapture::WASAPICapture() :
     m_cbFlushCounter(0),
     m_dwQueueID(0),
     m_DeviceStateChanged(nullptr),
+    m_AudioDataReady(nullptr),
     m_AudioClient(nullptr),
     m_AudioCaptureClient(nullptr),
     m_SampleReadyAsyncResult(nullptr),
@@ -53,10 +54,7 @@ WASAPICapture::WASAPICapture() :
     }
 
     m_DeviceStateChanged = ref new DeviceStateChangedEvent();
-    if (nullptr == m_DeviceStateChanged)
-    {
-        ThrowIfFailed(E_OUTOFMEMORY);
-    }
+    m_AudioDataReady = ref new AudioDataReadyEvent();
 
     // Register MMCSS work queue
     HRESULT hr = S_OK;
@@ -90,6 +88,7 @@ WASAPICapture::~WASAPICapture()
     MFUnlockWorkQueue(m_dwQueueID);
 
     m_DeviceStateChanged = nullptr;
+    m_AudioDataReady = nullptr;
     m_ContentStream = nullptr;
     m_OutputStream = nullptr;
     m_WAVDataWriter = nullptr;
@@ -234,7 +233,7 @@ HRESULT WASAPICapture::ActivateCompleted(IActivateAudioInterfaceAsyncOperation *
         return hr;
     }
     // Initialize the AudioClient in Shared Mode with the user specified buffer
-    if (m_DeviceProps.IsLowLatency == false)
+    if (!IS_LOW_LATENCY)
     {
 #endif
         hr = m_AudioClient->Initialize(AUDCLNT_SHAREMODE_SHARED,
@@ -823,21 +822,10 @@ HRESULT WASAPICapture::OnSendScopeData(IMFAsyncResult* pResult)
     hr = pResult->GetState(reinterpret_cast<IUnknown**>(&pState));
     if (SUCCEEDED(hr))
     {
-        AudioDataReadyEvent::SendEvent(reinterpret_cast<Platform::Object^>(this), pState->m_Data, pState->m_Size);
+        m_AudioDataReady->SendEvent(reinterpret_cast<Platform::Object^>(this), pState->m_Data, pState->m_Size);
     }
 
     SAFE_RELEASE(pState);
 
-    return S_OK;
-}
-
-//
-//  SetProperties()
-//
-//  Sets various properties that the user defines in the scenario
-//
-HRESULT WASAPICapture::SetProperties(CAPTUREDEVICEPROPS props)
-{
-    m_DeviceProps = props;
     return S_OK;
 }
