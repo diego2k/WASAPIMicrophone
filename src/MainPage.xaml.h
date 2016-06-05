@@ -31,12 +31,12 @@ namespace App1
 	private:
 		void Start_Click(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
 		void Stop_Click(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
+        void Finish_Click(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
 
 		Windows::Foundation::EventRegistrationToken     m_deviceStateChangeToken;
 		Windows::Foundation::EventRegistrationToken     m_audioDataReadyToken;
 
 		DeviceStateChangedEvent^    m_StateChangedEvent;
 		ComPtr<WASAPICapture>       m_spCapture;
-        void Finish_Click(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
     };
 }

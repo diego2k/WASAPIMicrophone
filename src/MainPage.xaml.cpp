@@ -100,7 +100,6 @@ void App1::MainPage::OnDeviceStateChange(Object^ sender, DeviceStateChangedEvent
 
 void App1::MainPage::OnAudioDataReady(Object^ sender, AudioDataReadyEventArgs^ e)
 {
-
 }
 
 void App1::MainPage::Start_Click(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
