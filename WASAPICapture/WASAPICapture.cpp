@@ -38,8 +38,9 @@ WASAPICapture::WASAPICapture() :
     m_ContentStream(nullptr),
     m_OutputStream(nullptr),
     m_WAVDataWriter(nullptr),
-    m_PlotData(nullptr),
-    m_fWriting(false)
+    m_SampleData(nullptr),
+    m_fWriting(false),
+    m_writeToFile(false)
 {
     // Create events for sample ready or user stop
     m_SampleReadyEvent = CreateEventEx(nullptr, nullptr, 0, EVENT_ALL_ACCESS);
@@ -71,6 +72,14 @@ WASAPICapture::WASAPICapture() :
 }
 
 //
+//  WASAPICapture()
+//
+WASAPICapture::WASAPICapture(bool writeToFile) : WASAPICapture::WASAPICapture()
+{
+    m_writeToFile = writeToFile;
+}
+
+//
 //  ~WASAPICapture()
 //
 WASAPICapture::~WASAPICapture()
@@ -93,7 +102,7 @@ WASAPICapture::~WASAPICapture()
     m_OutputStream = nullptr;
     m_WAVDataWriter = nullptr;
 
-    m_PlotData = nullptr;
+    m_SampleData = nullptr;
 
     DeleteCriticalSection(&m_CritSec);
 }
@@ -114,13 +123,13 @@ HRESULT WASAPICapture::InitializeAudioDeviceAsync()
 
     // This call must be made on the main UI thread.  Async operation will call back to 
     // IActivateAudioInterfaceCompletionHandler::ActivateCompleted, which must be an agile interface implementation
-    hr = ActivateAudioInterfaceAsync(m_DeviceIdString->Data(), 
+    hr = ActivateAudioInterfaceAsync(m_DeviceIdString->Data(),
 #ifdef USE_AUDIO_CLIENT_2
-        __uuidof(IAudioClient2),
+                                     __uuidof(IAudioClient2),
 #else
-        __uuidof(IAudioClient3),
+                                     __uuidof(IAudioClient3),
 #endif
-        nullptr, this, &asyncOp);
+                                     nullptr, this, &asyncOp);
     if (FAILED(hr))
     {
         m_DeviceStateChanged->SetState(DeviceState::DeviceStateInError, hr, true);
@@ -237,11 +246,11 @@ HRESULT WASAPICapture::ActivateCompleted(IActivateAudioInterfaceAsyncOperation *
     {
 #endif
         hr = m_AudioClient->Initialize(AUDCLNT_SHAREMODE_SHARED,
-            AUDCLNT_STREAMFLAGS_EVENTCALLBACK,
-            200000,
-            0,
-            m_MixFormat,
-            nullptr);
+                                       AUDCLNT_STREAMFLAGS_EVENTCALLBACK,
+                                       200000,
+                                       0,
+                                       m_MixFormat,
+                                       nullptr);
 #ifndef USE_AUDIO_CLIENT_2
     }
     else
@@ -323,19 +332,30 @@ exit:
 HRESULT WASAPICapture::CreateWAVFile()
 {
     // Create the WAV file, appending a number if file already exists
-    concurrency::task<StorageFile^>(KnownFolders::MusicLibrary->CreateFileAsync(AUDIO_FILE_NAME, CreationCollisionOption::GenerateUniqueName)).then(
-        [this](StorageFile^ file)
+    concurrency::task<IRandomAccessStream^> task;
+    if (m_writeToFile)
     {
-        if (nullptr == file)
+        task = concurrency::task<IRandomAccessStream^>([this]
         {
-            ThrowIfFailed(E_INVALIDARG);
-        }
+            return ref new Windows::Storage::Streams::InMemoryRandomAccessStream();
+        });
+    }
+    else
+    {
+        task = concurrency::task<StorageFile^>(KnownFolders::MusicLibrary->CreateFileAsync(AUDIO_FILE_NAME, CreationCollisionOption::GenerateUniqueName)).then(
+            [this](StorageFile^ file)
+        {
+            if (nullptr == file)
+            {
+                ThrowIfFailed(E_INVALIDARG);
+            }
 
-        return file->OpenAsync(FileAccessMode::ReadWrite);
-    })
+            return file->OpenAsync(FileAccessMode::ReadWrite);
+        });
+    }
 
-        // Then create a RandomAccessStream
-        .then([this](IRandomAccessStream^ stream)
+    // Then create a RandomAccessStream
+    task.then([this](IRandomAccessStream^ stream)
     {
         if (nullptr == stream)
         {
@@ -454,11 +474,11 @@ HRESULT WASAPICapture::InitializeScopeData()
 {
     HRESULT hr = S_OK;
 
-    m_cPlotDataFilled = 0;
-    m_cPlotDataMax = (MILLISECONDS_TO_VISUALIZE * m_MixFormat->nSamplesPerSec) / 1000;
+    m_cSampleDataFilled = 0;
+    m_cSampleDataMax = (MILLISECONDS_TO_VISUALIZE * m_MixFormat->nSamplesPerSec) / 1000;
 
-    m_PlotData = ref new Platform::Array<int, 1>(m_cPlotDataMax + 1);
-    if (nullptr == m_PlotData)
+    m_SampleData = ref new Platform::Array<int, 1>(m_cSampleDataMax + 1);
+    if (nullptr == m_SampleData)
     {
         return E_OUTOFMEMORY;
     }
@@ -466,11 +486,11 @@ HRESULT WASAPICapture::InitializeScopeData()
     // Only Support 16 bit Audio for now
     if (m_MixFormat->wBitsPerSample == 16)
     {
-        m_PlotData[m_cPlotDataMax] = -32768;  // INT16_MAX
+        m_SampleData[m_cSampleDataMax] = -32768;  // INT16_MAX
     }
     else
     {
-        m_PlotData = nullptr;
+        m_SampleData = nullptr;
         hr = S_FALSE;
     }
 
@@ -773,7 +793,7 @@ HRESULT WASAPICapture::ProcessScopeData(BYTE* pData, DWORD cbBytes)
 
     // We don't have a valid pointer array, so return.  This could be the case if we aren't
     // dealing with 16-bit audio
-    if (m_PlotData == nullptr)
+    if (m_SampleData == nullptr)
     {
         return S_FALSE;
     }
@@ -783,19 +803,19 @@ HRESULT WASAPICapture::ProcessScopeData(BYTE* pData, DWORD cbBytes)
     // Read the 16-bit samples from channel 0
     INT16 *pi16 = (INT16*)pData;
 
-    for (DWORD i = 0; m_cPlotDataFilled < m_cPlotDataMax && i < dwNumPoints; i++)
+    for (DWORD i = 0; m_cSampleDataFilled < m_cSampleDataMax && i < dwNumPoints; i++)
     {
-        m_PlotData[m_cPlotDataFilled] = *pi16;
+        m_SampleData[m_cSampleDataFilled] = *pi16;
         pi16 += m_MixFormat->nChannels;
 
-        m_cPlotDataFilled++;
+        m_cSampleDataFilled++;
     }
 
     // Send off the event and get ready for the next set of samples
-    if (m_cPlotDataFilled == m_cPlotDataMax)
+    if (m_cSampleDataFilled == m_cSampleDataMax)
     {
         ComPtr<IUnknown> spUnknown;
-        ComPtr<CAsyncState> spState = Make<CAsyncState>(m_PlotData, m_cPlotDataMax + 1);
+        ComPtr<CAsyncState> spState = Make<CAsyncState>(m_SampleData, m_cSampleDataMax + 1);
 
         hr = spState.As(&spUnknown);
         if (SUCCEEDED(hr))
@@ -803,7 +823,7 @@ HRESULT WASAPICapture::ProcessScopeData(BYTE* pData, DWORD cbBytes)
             MFPutWorkItem2(MFASYNC_CALLBACK_QUEUE_MULTITHREADED, 0, &m_xSendScopeData, spUnknown.Get());
         }
 
-        m_cPlotDataFilled = 0;
+        m_cSampleDataFilled = 0;
     }
 
     return hr;

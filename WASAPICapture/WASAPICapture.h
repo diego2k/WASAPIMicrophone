@@ -43,6 +43,7 @@ namespace WASAPIAudio
     {
     public:
         WASAPICapture();
+        WASAPICapture(bool writeToFile);
 
         HRESULT InitializeAudioDeviceAsync();
         HRESULT StartCaptureAsync();
@@ -80,6 +81,7 @@ namespace WASAPIAudio
         MFWORKITEM_KEY      m_SampleReadyKey;
         CRITICAL_SECTION    m_CritSec;
         DWORD               m_dwQueueID;
+        bool                m_writeToFile;
 
         DWORD               m_cbHeaderSize;
         DWORD               m_cbDataSize;
@@ -106,9 +108,9 @@ namespace WASAPIAudio
         DeviceStateChangedEvent^       m_DeviceStateChanged;
         AudioDataReadyEvent^           m_AudioDataReady;
 
-        Platform::Array<int, 1>^    m_PlotData;
-        UINT32                      m_cPlotDataMax;
-        UINT32                      m_cPlotDataFilled;
+        Platform::Array<int, 1>^    m_SampleData;
+        UINT32                      m_cSampleDataMax;
+        UINT32                      m_cSampleDataFilled;
 
     };
 }

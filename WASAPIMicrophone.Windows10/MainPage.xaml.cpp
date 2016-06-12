@@ -113,9 +113,8 @@ void App1::MainPage::Start_Click(Platform::Object^ sender, Windows::UI::Xaml::Ro
     {
         m_spCapture = nullptr;
     }
-
     // Create a new WASAPI capture instance
-    m_spCapture = Make<WASAPICapture>();
+    m_spCapture = Make<WASAPICapture, bool>(true);
 
     if (nullptr == m_spCapture)
     {
