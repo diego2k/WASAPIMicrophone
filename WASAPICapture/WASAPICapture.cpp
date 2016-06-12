@@ -72,8 +72,10 @@ WASAPICapture::WASAPICapture() :
 }
 
 //
-//  WASAPICapture()
-//
+//  WASAPICapture(bool)
+//  
+//  Write data to file or in memory. 
+// 
 WASAPICapture::WASAPICapture(bool writeToFile) : WASAPICapture::WASAPICapture()
 {
     m_writeToFile = writeToFile;
@@ -738,7 +740,7 @@ HRESULT WASAPICapture::OnAudioSampleRequested(Platform::Boolean IsSilence)
         // Release buffer back
         m_AudioCaptureClient->ReleaseBuffer(FramesAvailable);
 
-        // Update plotter data
+        // Update sample data
         ProcessScopeData(Data, cbBytesToCapture);
 
         // Write File and async store

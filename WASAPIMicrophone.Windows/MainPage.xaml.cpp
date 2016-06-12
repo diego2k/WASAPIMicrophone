@@ -101,6 +101,7 @@ void MainPage::OnDeviceStateChange(Object^ sender, DeviceStateChangedEventArgs^ 
 
 void MainPage::OnAudioDataReady(Object^ sender, AudioDataReadyEventArgs^ e)
 {
+    e->PcmData;
 }
 
 void MainPage::Start_Click(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
@@ -111,7 +112,7 @@ void MainPage::Start_Click(Platform::Object^ sender, Windows::UI::Xaml::RoutedEv
     }
 
     // Create a new WASAPI capture instance
-    m_spCapture = Make<WASAPICapture>();
+    m_spCapture = Make<WASAPICapture, bool>(true);
 
     if (nullptr == m_spCapture)
     {

@@ -12,14 +12,14 @@ namespace WASAPIAudio
 	public ref class AudioDataReadyEventArgs sealed
 	{
 	internal:
-		AudioDataReadyEventArgs(Platform::Array<int, 1>^ points, UINT32 size) :
-			m_PointArray(points),
+		AudioDataReadyEventArgs(Platform::Array<int, 1>^ data, UINT32 size) :
+            m_DataArray(data),
 			m_Size(size)
 		{};
 
-		property Platform::Array<int, 1>^ Points
+		property Platform::Array<int, 1>^ PcmData
 		{
-			Platform::Array<int, 1>^ get() { return m_PointArray; }
+			Platform::Array<int, 1>^ get() { return m_DataArray; }
 		};
 
 		property UINT32 Size
@@ -28,7 +28,7 @@ namespace WASAPIAudio
 		};
 
 	private:
-		Platform::Array<int, 1>^     m_PointArray;
+		Platform::Array<int, 1>^     m_DataArray;
 		UINT32                      m_Size;
 	};
 
