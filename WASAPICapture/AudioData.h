@@ -17,6 +17,7 @@ namespace WASAPIAudio
 			m_Size(size)
 		{};
 
+        // Data only from channel 0 !!!
 		property Platform::Array<int, 1>^ PcmData
 		{
 			Platform::Array<int, 1>^ get() { return m_DataArray; }
